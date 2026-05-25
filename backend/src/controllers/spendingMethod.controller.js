@@ -47,7 +47,7 @@ export const removeMethod = async (req, res, next) => {
 // POST /api/v1/spending-methods/apply
 export const applyTobudgets = async (req, res, next) => {
   try {
-    const { methodId, monthlyIncome, month, year, categoryMappings } = req.body;
+    const { methodId, monthlyIncome, month, year, categoryMappings, walletIds } = req.body;
 
     if (!methodId)       return error(res, 'Thiếu methodId', 400);
     if (!monthlyIncome || monthlyIncome <= 0) return error(res, 'Thu nhập không hợp lệ', 400);
@@ -57,7 +57,9 @@ export const applyTobudgets = async (req, res, next) => {
 
     const m  = parseInt(month)  || new Date().getMonth() + 1;
     const y  = parseInt(year)   || new Date().getFullYear();
-    const results = await applyMethod(req.user.id, { methodId, monthlyIncome, month: m, year: y, categoryMappings });
+    // walletIds: optional array of account IDs to link to each budget
+    const accountIds = Array.isArray(walletIds) ? walletIds : [];
+    const results = await applyMethod(req.user.id, { methodId, monthlyIncome, month: m, year: y, categoryMappings, accountIds });
 
     return success(res, results, `Đã áp dụng phương pháp vào ${results.length} danh mục ngân sách`);
   } catch (err) {

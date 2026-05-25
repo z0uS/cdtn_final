@@ -37,6 +37,10 @@ export const getBudgets = async (req, res, next) => {
       percent_used:  b.amount_limit > 0
         ? Math.round((parseFloat(b.amount_spent) / parseFloat(b.amount_limit)) * 100)
         : 0,
+      // Parse account_ids JSON (stored as JSON array string in DB)
+      account_ids: b.account_ids
+        ? (typeof b.account_ids === 'string' ? JSON.parse(b.account_ids) : b.account_ids)
+        : [],
     }));
 
     return success(res, enriched);
@@ -47,16 +51,21 @@ export const getBudgets = async (req, res, next) => {
 // UPSERT: nếu đã có ngân sách tháng đó thì cập nhật
 export const createBudget = async (req, res, next) => {
   try {
-    const { category_id, amount_limit, month: qMonth, year: qYear } = req.body;
+    const { category_id, amount_limit, month: qMonth, year: qYear, account_ids } = req.body;
     const { month, year } = getCurrentMonthYear();
     const m = parseInt(qMonth) || month;
     const y = parseInt(qYear)  || year;
 
+    // account_ids: array of account IDs, e.g. [1, 3]
+    const accountIdsJson = Array.isArray(account_ids) && account_ids.length > 0
+      ? JSON.stringify(account_ids.map(Number))
+      : null;
+
     await query(
-      `INSERT INTO budgets (user_id, category_id, amount_limit, month, year)
-       VALUES (?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE amount_limit = VALUES(amount_limit)`,
-      [req.user.id, category_id, parseFloat(amount_limit), m, y],
+      `INSERT INTO budgets (user_id, category_id, amount_limit, month, year, account_ids)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE amount_limit = VALUES(amount_limit), account_ids = VALUES(account_ids)`,
+      [req.user.id, category_id, parseFloat(amount_limit), m, y, accountIdsJson],
     );
 
     const [rows] = await query(
@@ -67,7 +76,13 @@ export const createBudget = async (req, res, next) => {
       [req.user.id, category_id, m, y],
     );
 
-    return success(res, rows[0], 'Tạo/cập nhật ngân sách thành công!', 201);
+    const row = rows[0];
+    return success(res, {
+      ...row,
+      account_ids: row.account_ids
+        ? (typeof row.account_ids === 'string' ? JSON.parse(row.account_ids) : row.account_ids)
+        : [],
+    }, 'Tạo/cập nhật ngân sách thành công!', 201);
   } catch (err) { next(err); }
 };
 
@@ -80,13 +95,34 @@ export const updateBudget = async (req, res, next) => {
     );
     if (!existing.length) return error(res, 'Không tìm thấy ngân sách.', 404);
 
-    await query(
-      'UPDATE budgets SET amount_limit = ? WHERE id = ?',
-      [parseFloat(req.body.amount_limit), req.params.id],
-    );
+    const { amount_limit, account_ids } = req.body;
+
+    // Build dynamic update
+    const updates = [];
+    const values  = [];
+    if (amount_limit !== undefined) {
+      updates.push('amount_limit = ?');
+      values.push(parseFloat(amount_limit));
+    }
+    if (account_ids !== undefined) {
+      updates.push('account_ids = ?');
+      values.push(Array.isArray(account_ids) && account_ids.length > 0
+        ? JSON.stringify(account_ids.map(Number))
+        : null);
+    }
+    if (updates.length === 0) return error(res, 'Không có dữ liệu cần cập nhật.', 400);
+
+    values.push(req.params.id);
+    await query(`UPDATE budgets SET ${updates.join(', ')} WHERE id = ?`, values);
 
     const [rows] = await query('SELECT * FROM budgets WHERE id = ?', [req.params.id]);
-    return success(res, rows[0], 'Cập nhật ngân sách thành công!');
+    const row = rows[0];
+    return success(res, {
+      ...row,
+      account_ids: row.account_ids
+        ? (typeof row.account_ids === 'string' ? JSON.parse(row.account_ids) : row.account_ids)
+        : [],
+    }, 'Cập nhật ngân sách thành công!');
   } catch (err) { next(err); }
 };
 

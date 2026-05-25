@@ -13,7 +13,7 @@ export const getNotifications = async (req, res, next) => {
     const params = [req.user.id];
 
     if (is_read === 'false') { conditions.push('is_read = 0'); }
-    if (is_read === 'true')  { conditions.push('is_read = 1'); }
+    if (is_read === 'true') { conditions.push('is_read = 1'); }
 
     const where = conditions.join(' AND ');
 

@@ -10,11 +10,18 @@
     "db:schema": "mysql -u root -p expense_management < database/schema.sql",
     "db:seed": "mysql -u root -p expense_management < database/seed.sql"
   },
-  "keywords": ["expense", "management", "ai", "nodejs", "express"],
+  "keywords": [
+    "expense",
+    "management",
+    "ai",
+    "nodejs",
+    "express"
+  ],
   "author": "CDTN",
   "license": "MIT",
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
+    "axios": "^1.16.1",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",

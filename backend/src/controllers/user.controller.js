@@ -18,11 +18,12 @@ export const getProfile = async (req, res, next) => {
 // ── PUT /users/profile ───────────────────────────────────────
 export const updateProfile = async (req, res, next) => {
   try {
-    const { full_name, currency, theme, avatar_url } = req.body;
+    const { full_name, email, currency, theme, avatar_url } = req.body;
     const fields = [];
     const values = [];
 
     if (full_name !== undefined) { fields.push('full_name = ?');  values.push(full_name.trim()); }
+    if (email     !== undefined) { fields.push('email = ?');      values.push(email.trim()); }
     if (currency  !== undefined) { fields.push('currency = ?');   values.push(currency); }
     if (theme     !== undefined) { fields.push('theme = ?');      values.push(theme); }
     if (avatar_url !== undefined) { fields.push('avatar_url = ?'); values.push(avatar_url); }

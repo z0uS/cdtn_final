@@ -74,7 +74,10 @@ export async function deleteMethod(userId, methodId) {
  * Chiến lược: map allocation.label → category có tên gần giống nhất
  * (thực tế user tự map qua categoryMappings: [{allocationLabel, categoryId}])
  */
-export async function applyMethod(userId, { methodId, monthlyIncome, month, year, categoryMappings }) {
+/**
+ * accountIds: optional number[] — danh sách ví/tài khoản được gắn với ngân sách
+ */
+export async function applyMethod(userId, { methodId, monthlyIncome, month, year, categoryMappings, accountIds }) {
   // Lấy allocations
   const [allocs] = await query(
     `SELECT ma.label, ma.percentage
@@ -84,6 +87,11 @@ export async function applyMethod(userId, { methodId, monthlyIncome, month, year
     [methodId, userId],
   );
   if (allocs.length === 0) throw new Error('Không tìm thấy phương pháp');
+
+  // Chuẩn hoá account_ids JSON
+  const accountIdsJson = Array.isArray(accountIds) && accountIds.length > 0
+    ? JSON.stringify(accountIds.map(Number))
+    : null;
 
   // categoryMappings: [{ allocationLabel, categoryId }]
   const results = [];
@@ -101,14 +109,14 @@ export async function applyMethod(userId, { methodId, monthlyIncome, month, year
 
     if (existing) {
       await query(
-        `UPDATE budgets SET amount_limit = ? WHERE id = ?`,
-        [budgetAmount, existing.id],
+        `UPDATE budgets SET amount_limit = ?, account_ids = ? WHERE id = ?`,
+        [budgetAmount, accountIdsJson, existing.id],
       );
       results.push({ categoryId: mapping.categoryId, amount: budgetAmount, action: 'updated' });
     } else {
       await query(
-        `INSERT INTO budgets (user_id, category_id, amount_limit, month, year) VALUES (?, ?, ?, ?, ?)`,
-        [userId, mapping.categoryId, budgetAmount, month, year],
+        `INSERT INTO budgets (user_id, category_id, amount_limit, month, year, account_ids) VALUES (?, ?, ?, ?, ?, ?)`,
+        [userId, mapping.categoryId, budgetAmount, month, year, accountIdsJson],
       );
       results.push({ categoryId: mapping.categoryId, amount: budgetAmount, action: 'created' });
     }

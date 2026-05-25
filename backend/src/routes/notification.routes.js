@@ -6,9 +6,9 @@ import { getNotifications, getUnreadCount, markAsRead, markAllAsRead } from '../
 const router = Router();
 router.use(auth);
 
-router.get('/',             getNotifications);
+router.get('/', getNotifications);
 router.get('/unread-count', getUnreadCount);
-router.put('/read-all',     markAllAsRead);
-router.put('/:id/read',     markAsRead);
+router.put('/read-all', markAllAsRead);
+router.put('/:id/read', markAsRead);
 
 export default router;
