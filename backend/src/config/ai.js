@@ -20,7 +20,7 @@ if (process.env.GEMINI_API_KEY) {
  * @param {string} modelName
  * @returns {GenerativeModel|null}
  */
-export const getModel = (modelName = process.env.AI_MODEL || 'gemini-flash-latest', systemInstruction) => {
+export const getModel = (modelName = process.env.AI_MODEL || 'gemini-2.5-flash', systemInstruction) => {
   if (!genAI) return null;
   return genAI.getGenerativeModel({ model: modelName, systemInstruction });
 };

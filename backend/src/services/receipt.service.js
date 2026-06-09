@@ -19,7 +19,7 @@ export async function analyzeReceipt(filePath) {
     const mimeMap = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp' };
     const mimeType = mimeMap[ext] || 'image/jpeg';
 
-    const model = getModel('gemini-flash-latest');
+    const model = getModel(process.env.AI_MODEL || 'gemini-2.5-flash');
     if (!model) {
       return { success: false, message: 'AI chưa được cấu hình. Vui lòng thêm GEMINI_API_KEY.' };
     }

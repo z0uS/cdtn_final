@@ -105,7 +105,7 @@ export const callAI = async (systemPrompt, history = [], userMessage) => {
 
   try {
     const model = genAI.getGenerativeModel({
-      model: process.env.AI_MODEL || 'gemini-flash-latest',
+      model: process.env.AI_MODEL || 'gemini-2.5-flash',
       systemInstruction: systemPrompt,
     });
 
